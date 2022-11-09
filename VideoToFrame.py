@@ -7,6 +7,8 @@ from Image_en_Ascii import image_to_ascii
 from threading import Thread
 import time as tm
 from time import time
+from time import sleep
+from tqdm import tqdm
 import shutil
 import multiprocessing
 
@@ -49,7 +51,8 @@ def FrameToAscii(ThreadName: str, nameProject: str, rangeFrame: list) -> None:
 		os.makedirs(Ascii_folder)
 	listImages = os.listdir(folder)
 
-	for i in range(rangeFrame[0], rangeFrame[1]):
+	print(f"{ThreadName}", end=" ")
+	for i in tqdm(range(rangeFrame[0], rangeFrame[1])):
 		finale = image_to_ascii(f"{folder}/frame{i}.jpg", 10)
 		with open(f"AsciiImages_{nameProject}/frame{i}ASCII.txt", "w", encoding="utf-8") as file:
 			for ligne in finale:

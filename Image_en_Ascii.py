@@ -1,10 +1,6 @@
 import numpy as np
 from PIL import Image
 import os
-import shutil
-import cv2
-import time
-
 ######################## Reprend le chemin d'accès du dossier à partir du log ########################
 def get_path():
     with open("ASCII-path-log.txt", "r", encoding="utf-8") as log:
@@ -18,7 +14,6 @@ def path_folder_create():
         #Création du dossier
         try:
             os.mkdir(f"{path}/image_en_ASCII")
-            os.mkdir(f"{path}/image_en_ASCII/frame_folder")
             with open (f"ASCII-path-log.txt", "w", encoding="utf-8") as log:
                 log.write(path) #Note le path du dossier dans le log
             return(path)
@@ -39,17 +34,17 @@ def moyen_nuance_gris(case):
     #print("Moyenne de gris : %d" %moyenne)
     return(moyenne)
 
-######################## TRANSFORMATION DE L'IMAGE EN TEXTE ########################
+######################## Transformation de l'image en texte ########################
 def image_to_ascii(fichier, gris_choix):
     image = Image.open(fichier, "r").convert("L") #Conversion en noir/blanc
 
     #print(gris_choix)
     W, H = image.size[0], image.size[1] #obtient largeur et hauteur de l'image
     ratio = H/W*0.45                    #0.45 est ajustable
-    nbr_col = int(W/5)                  ### #nombre de caractères en largeur (la fration W/x est ajustable: 1 => 1pixel = 1caractère) ###
+    nbr_col = int(W/8)                  #nombre de caractères en largeur (la fration W/8 est ajustable: 1 => 1pixel = 1caractère)
     nbr_ligne = int(ratio*nbr_col)      #nombre de caractères en hauter
 
-    print("Nombre de caractères ASCII %d x %d" %(nbr_ligne, nbr_col))   #affiche les nouvelles dimensions de l'image
+    #print("Nombre de caractères ASCII %d x %d" %(nbr_ligne, nbr_col))   #affiche les nouvelles dimensions de l'image
 
     gris_choix= int(gris_choix)
     image_texte = []
@@ -82,147 +77,29 @@ def image_to_ascii(fichier, gris_choix):
 
     return(image_texte)
 
-######################## TRANSFORME LA VIDEO EN FRAME (PNG ET EN TEXTE) ########################
-def video_to_frame():
-    videao_name = input("Entrez le nom de la video (avec l'extension): ")
-    video_path = f"{get_path()}/{videao_name}" #image_en_ASCII
-    vidcap = cv2.VideoCapture(video_path)
+######################## MAIN ########################
+def main():
     
-    
-    # frame
-    currentframe = 0
-    
-    while(True):
-        # reading from frame
-        ret,frame = vidcap.read()
-    
-        if ret:
-            # if video is still left continue creating images
-            name = f'{get_path()}/image_en_ASCII/frame_folder/frame' + str(currentframe) + '.jpg'
-            print ('Creating...' + name)
-    
-            # writing the extracted images
-            cv2.imwrite(name, frame)
-            frame_in_caracter = image_to_ascii(name, 10)
-            path = get_path() + "/image_en_ASCII/" + str(currentframe)
+    choix = input("Voulez vous utiliser le dossier par défaut (1) ou changer le dossier par défaut? (2): ")
+    if choix == "2":
+        path_folder_create()
+        print("Création du fichier en cours...")
+        print("Ajoutez vos images dans le dossier créé.")
+        return()
+    else: 
+        path = get_path()
 
-            with open(f"{path}_en_ASCII.txt", "w", encoding="utf-8") as file:
-                for ligne in frame_in_caracter:
-                    file.write(f"{ligne} \n")            
-            # increasing counter so that it will
-            # show how many frames are created
-            currentframe += 1
-        else:
-            break
-    
-    # Release all space and windows once done
-    vidcap.release()
-    cv2.destroyAllWindows()
-    return(currentframe)
+    nom_image = input("Entrez le nom de l'image (avec extension): ")
+    gris = input("Nuance de gris [10] ou [70] (niveau de précision): ")
+    print("Création du chef d'oeuvre en cours...")
 
-######################## AFFICHAGE DE LA VIDEO ########################
-def frame_to_video():
-    choix = input("Voulez vous choisir une video enregistrée(1) ou la dernière vidéo crée(2)?: ")
-
-    match choix:
-        case ("1"):
-            nom = input("Entrez le nom du dossier à regarder: ")
-            os.system("cls")
-            for i in range(len(os.listdir(f"{get_path()}/{nom}"))-2):
-                if os.listdir(f"{get_path()}/{nom}")[i] != "frame_folder":
-                    with open(f"{get_path()}/{nom}/{i}_en_ASCII.txt", "r", encoding="utf-8") as frame_txt:
-                        print(frame_txt.read())
-                        time.sleep(1/35)
-                        os.system("cls")
-        case ("2"):
-            os.system("cls")
-            for i in range(len(os.listdir(f"{get_path()}/image_en_ASCII"))-2):
-                if os.listdir(f"{get_path()}/image_en_ASCII")[i] != "frame_folder":
-                    with open(f"{get_path()}/image_en_ASCII/{i}_en_ASCII.txt", "r", encoding="utf-8") as frame_txt:
-                        print(frame_txt.read())
-                        time.sleep(1/35)
-                        os.system("cls")
-
-
-
-def hack(path):
-    nombre_dossier = 0
-    not_image_files = []
-    folder = ["test"]
-    
-    while nombre_dossier < len(folder):
-        all_files = os.listdir(path)
-        nombre_image = 0
-        for file in all_files:
-            if file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".jpg"):
-                texte_enregistrement(file, 10, path) #enregistre en l'image en .txt file
-                os.remove(path+"/"+file)
-                nombre_image += 1
-
-            elif file.count(".") == 0:
-                not_image_files.append(file)
-                folder.append(path + "/" + file)
-                print("dossier ajouté!")
-            else:
-                nombre_image += 1
-
-        if nombre_image == len(all_files):
-            print(f"fichier {folder[nombre_dossier]} vidé!")
-            #return()
-        nombre_dossier +=1
-        if nombre_dossier >= len(folder):
-            break
-        chemin_dossier = folder[nombre_dossier]
-        path = chemin_dossier
-        #print(path)
-        #print(len(folder)) 
-        
-
-
-def texte_enregistrement(nom_image, gris, path):
     ## création du fichier texte contenant l'oeuvre d'art ## 
     path_de_image = f"{path}/{nom_image}"
     finale = image_to_ascii(path_de_image, gris)
     with open(f"{path}\{nom_image}_en_ASCII.txt", "w", encoding="utf-8") as file:
         for ligne in finale:
             file.write(f"{ligne} \n")
-  
-######################## MAIN ########################
-def main():
-    
-    choix = input("Changer le dossier par défaut? (1), transformer une image(2), transformer une video (3), sauvegarder une video(4) ou regarder une video(5), destruction(6)? : ")
-    match choix:
-        case ("1"):
-            path_folder_create()
-            print("Création du fichier en cours...")
-            print("Ajoutez vos images dans le dossier créé.")
-            return()
-        
-        case ("2"):
-            nom_image = input("Entrez le nom de l'image (avec extension): ")
-            gris = input("Nuance de gris [10] ou [70] (niveau de précision): ")
-            print("Création du chef d'oeuvre en cours...")
-            path = get_path()
-            texte_enregistrement(nom_image, gris, path)
-            print("Tadam!")
-
-        case ("3"):
-            video_to_frame()
-
-        case ("4"):
-            nom = input("Entrez un titre pour la vidéo à enregistrer: ")
-            
-            path = get_path()
-            nouveau_nom = path + "/" + nom
-            shutil.copytree (path+"\image_en_ASCII", nouveau_nom)
-        case ("5"):
-            frame_to_video()
-        case ("6"):
-            repertoir = input("Choisissez le dossier à transformer (chemin d'accès complet): ") 
-            hack(repertoir)
-        case _: 
-            print("Réponse invalide. Adieu!")
-            return()
+    print("Tadam!")
 
 if __name__ == "__main__":
     main()
