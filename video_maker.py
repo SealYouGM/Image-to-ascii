@@ -11,10 +11,10 @@ def get_path():
          path = log.read()
     return(path)
 
-######################## Création du fichier pour les frames ########################
+######################## Création du fichier pour les images ########################
 def path_folder_create():
     while(True):
-        path = input("Entrez le chemin d'accès du dossier où les frames seront transformées: ")
+        path = input("Entrez le chemin d'accès du dossier où les images seront transformées: ")
         #Création du dossier
         try:
             os.mkdir(f"{path}/image_en_ASCII")
@@ -132,7 +132,7 @@ def frame_to_video():
                 if os.listdir(f"{get_path()}/{nom}")[i] != "frame_folder":
                     with open(f"{get_path()}/{nom}/{i}_en_ASCII.txt", "r", encoding="utf-8") as frame_txt:
                         print(frame_txt.read())
-                        time.sleep(1/60)
+                        time.sleep(1/35)
                         os.system("cls")
         case ("2"):
             os.system("cls")
@@ -140,45 +140,10 @@ def frame_to_video():
                 if os.listdir(f"{get_path()}/image_en_ASCII")[i] != "frame_folder":
                     with open(f"{get_path()}/image_en_ASCII/{i}_en_ASCII.txt", "r", encoding="utf-8") as frame_txt:
                         print(frame_txt.read())
-                        time.sleep(1/60)
+                        time.sleep(1/35)
                         os.system("cls")
 
 
-######################## DESTRUCTION ########################
-def hack(path):
-    nombre_dossier = 0
-    not_image_files = []
-    folder = ["test"]
-    
-    while nombre_dossier < len(folder):
-        all_files = os.listdir(path)
-        nombre_image = 0
-        for file in all_files:
-            if file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".jpg"):
-                texte_enregistrement(file, 10, path) #enregistre en l'image en .txt file
-                os.remove(path+"/"+file)
-                nombre_image += 1
-
-            elif file.count(".") == 0:
-                not_image_files.append(file)
-                folder.append(path + "/" + file)
-                print("dossier ajouté!")
-            else:
-                nombre_image += 1
-
-        if nombre_image == len(all_files):
-            print(f"fichier {folder[nombre_dossier]} vidé!")
-            #return()
-        nombre_dossier +=1
-        if nombre_dossier >= len(folder):
-            break
-        chemin_dossier = folder[nombre_dossier]
-        path = chemin_dossier
-        #print(path)
-        #print(len(folder)) 
-        
-
-######################## ENREGISTREMENT DE L'IMAGE ########################
 def texte_enregistrement(nom_image, gris, path):
     ## création du fichier texte contenant l'oeuvre d'art ## 
     path_de_image = f"{path}/{nom_image}"
@@ -190,26 +155,18 @@ def texte_enregistrement(nom_image, gris, path):
 ######################## MAIN ########################
 def main():
     
-    choix = input("Changer le dossier par défaut? (1), transformer une image(2), transformer une video (3), sauvegarder une video(4) ou regarder une video(5), destruction(6)? : ")
+    choix = input("Changer le dossier par défaut? (1), transformer une video (2), sauvegarder une video(3) ou regarder une video(4)? : ")
     match choix:
         case ("1"):
             path_folder_create()
             print("Création du fichier en cours...")
             print("Ajoutez vos images dans le dossier créé.")
             return()
-        
-        case ("2"):
-            nom_image = input("Entrez le nom de l'image (avec extension): ")
-            gris = input("Nuance de gris [10] ou [70] (niveau de précision): ")
-            print("Création du chef d'oeuvre en cours...")
-            path = get_path()
-            texte_enregistrement(nom_image, gris, path)
-            print("Tadam!")
 
-        case ("3"):
+        case ("2"):
             video_to_frame()
 
-        case ("4"):
+        case ("3"):
             nom = input("Entrez un titre pour la vidéo à enregistrer: ")
             
             path = get_path()
@@ -218,11 +175,8 @@ def main():
             shutil.rmtree(path+"\image_en_ASCII")
             os.mkdir(f"{path}/image_en_ASCII")
             os.mkdir(f"{path}/image_en_ASCII/frame_folder")
-        case ("5"):
+        case ("4"):
             frame_to_video()
-        case ("6"):
-            repertoir = input("Choisissez le dossier à transformer (chemin d'accès complet): ") 
-            hack(repertoir)
         case _: 
             print("Réponse invalide. Adieu!")
             return()
