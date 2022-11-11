@@ -3,7 +3,10 @@ from PIL import Image
 import os
 import shutil
 import cv2
-import time
+from time import time
+from time import sleep
+from tqdm import tqdm
+import multiprocessing
 
 ######################## Reprend le chemin d'accès du dossier à partir du log ########################
 def get_path():
@@ -49,7 +52,7 @@ def image_to_ascii(fichier, gris_choix):
     nbr_col = int(W/5)                  ### #nombre de caractères en largeur (la fration W/x est ajustable: 1 => 1pixel = 1caractère) ###
     nbr_ligne = int(ratio*nbr_col)      #nombre de caractères en hauter
 
-    print("Nombre de caractères ASCII %d x %d" %(nbr_ligne, nbr_col))   #affiche les nouvelles dimensions de l'image
+    #print("Nombre de caractères ASCII %d x %d" %(nbr_ligne, nbr_col))   #affiche les nouvelles dimensions de l'image
 
     gris_choix= int(gris_choix)
     image_texte = []
@@ -82,12 +85,11 @@ def image_to_ascii(fichier, gris_choix):
 
     return(image_texte)
 
-######################## TRANSFORME LA VIDEO EN FRAME (PNG ET EN TEXTE) ########################
+######################## TRANSFORME LA VIDEO EN FRAME (PNG) ########################
 def video_to_frame():
     videao_name = input("Entrez le nom de la video (avec l'extension): ")
     video_path = f"{get_path()}/{videao_name}" #image_en_ASCII
     vidcap = cv2.VideoCapture(video_path)
-    
     
     # frame
     currentframe = 0
@@ -98,17 +100,14 @@ def video_to_frame():
     
         if ret:
             # if video is still left continue creating images
-            name = f'{get_path()}/image_en_ASCII/frame_folder/frame' + str(currentframe) + '.jpg'
-            print ('Creating...' + name)
     
             # writing the extracted images
-            cv2.imwrite(name, frame)
-            frame_in_caracter = image_to_ascii(name, 10)
-            path = get_path() + "/image_en_ASCII/" + str(currentframe)
-
-            with open(f"{path}_en_ASCII.txt", "w", encoding="utf-8") as file:
-                for ligne in frame_in_caracter:
-                    file.write(f"{ligne} \n")            
+            if currentframe % 3 == 0:
+                name = f'{get_path()}/image_en_ASCII/frame_folder/frame' + str(int(currentframe/3)) + '.jpg'
+                print ('Creating...' + name)
+                cv2.imwrite(name, frame)
+            #frame_in_caracter = image_to_ascii(name, 10)
+            #path = get_path() + "/image_en_ASCII/" + str(currentframe)           
             # increasing counter so that it will
             # show how many frames are created
             currentframe += 1
@@ -119,7 +118,22 @@ def video_to_frame():
     vidcap.release()
     cv2.destroyAllWindows()
     return(currentframe)
-
+##################### Transforme chaque frame en fichier txt #####################
+def FrameToAscii(ThreadName: str, rangeFrame: list) -> None:
+    #print(rangeFrame)
+    folder = f"{get_path()}/image_en_ASCII/frame_folder"
+    Ascii_folder = f"{get_path()}/image_en_ASCII"
+    #print(f"{ThreadName}", end=" ")
+    for i in range(rangeFrame[0], rangeFrame[1]): #tqdm()
+        #print(f"{ThreadName}", end=" ")
+        try:
+            finale = image_to_ascii(f"{folder}/frame{i}.jpg", 10)
+            with open(f"{Ascii_folder}/frame{i}ASCII.txt", "w", encoding="utf-8") as file:
+                for ligne in finale:
+                    file.write(f"{ligne} \n")
+        except FileNotFoundError:
+            pass
+    
 ######################## AFFICHAGE DE LA VIDEO ########################
 def frame_to_video():
     choix = input("Voulez vous choisir une video enregistrée(1) ou la dernière vidéo crée(2)?: ")
@@ -130,18 +144,24 @@ def frame_to_video():
             os.system("cls")
             for i in range(len(os.listdir(f"{get_path()}/{nom}"))-2):
                 if os.listdir(f"{get_path()}/{nom}")[i] != "frame_folder":
-                    with open(f"{get_path()}/{nom}/{i}_en_ASCII.txt", "r", encoding="utf-8") as frame_txt:
-                        print(frame_txt.read())
-                        time.sleep(1/35)
-                        os.system("cls")
+                    try:
+                        with open(f"{get_path()}/{nom}/frame{i}ASCII.txt", "r", encoding="utf-8") as frame_txt:
+                            print(frame_txt.read())
+                            sleep(1/14)
+                            os.system("cls")
+                    except FileNotFoundError:
+                        pass
         case ("2"):
             os.system("cls")
             for i in range(len(os.listdir(f"{get_path()}/image_en_ASCII"))-2):
                 if os.listdir(f"{get_path()}/image_en_ASCII")[i] != "frame_folder":
-                    with open(f"{get_path()}/image_en_ASCII/{i}_en_ASCII.txt", "r", encoding="utf-8") as frame_txt:
-                        print(frame_txt.read())
-                        time.sleep(1/35)
-                        os.system("cls")
+                    try:
+                        with open(f"{get_path()}/image_en_ASCII/frame{i}ASCII.txt", "r", encoding="utf-8") as frame_txt:
+                            print(frame_txt.read())
+                            sleep(1/14)
+                            os.system("cls")
+                    except FileNotFoundError:
+                        pass
 
 
 def texte_enregistrement(nom_image, gris, path):
@@ -164,7 +184,25 @@ def main():
             return()
 
         case ("2"):
+            numberThread = int(input("Nombre de threads: "))
+            path = get_path()
+            nameProject = path + "/image_en_ASCII"
             video_to_frame()
+            nombreImages = len(os.listdir(f"{get_path()}/image_en_ASCII/frame_folder"))
+            #USE MULTIPROCESSING INSTEAD (MY CPU 16 CORES)
+            jobs = []
+            debut = time()
+            #Create (n) processes
+            for i in range(numberThread):
+                L = [i * nombreImages // numberThread, (i * nombreImages // numberThread) + nombreImages // numberThread]
+                process = multiprocessing.Process(target=FrameToAscii, args=(f"Thread {i}", L))
+                process.start()
+                jobs.append(process)
+            #Finishes all the processes
+            for process in jobs: 
+                process.join()
+            fin = time()
+            print(f"Temps pour calculer: {fin - debut}")
 
         case ("3"):
             nom = input("Entrez un titre pour la vidéo à enregistrer: ")
