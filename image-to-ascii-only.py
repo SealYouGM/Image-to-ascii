@@ -10,7 +10,7 @@ def path_folder_create():
         path = input("Entrez le chemin d'accès du dossier où les images seront transformées: ")
         #Création du dossier
         try:
-            os.mkdir(f"{path}/image_en_ASCII")
+            os.mkdir(f"{path}\image_en_ASCII")
             with open (f"ASCII-path-log.txt", "w", encoding="utf-8") as log:
                 log.write(path) #Note le path du dossier dans le log
             return(path)
@@ -44,7 +44,7 @@ def image_to_ascii(fichier, gris_choix):
     #print(gris_choix)
     W, H = image.size[0], image.size[1] #obtient largeur et hauteur de l'image
     ratio = H/W*0.45                    #0.45 est ajustable
-    nbr_col = int(W/5)                  ### #nombre de caractères en largeur (la fration W/x est ajustable: 1 => 1pixel = 1caractère) ###
+    nbr_col = int(W/1)                  ### #nombre de caractères en largeur (la fration W/x est ajustable: 1 => 1pixel = 1caractère) ###
     nbr_ligne = int(ratio*nbr_col)      #nombre de caractères en hauter
 
     print("Nombre de caractères ASCII %d x %d" %(nbr_ligne, nbr_col))   #affiche les nouvelles dimensions de l'image
@@ -85,7 +85,7 @@ def texte_enregistrement(nom_image, gris, path):
     ## création du fichier texte contenant l'oeuvre d'art ## 
     path_de_image = f"{path}/{nom_image}"
     finale = image_to_ascii(path_de_image, gris)
-    with open(f"{path}/image_en_ASCII/{nom_image}_en_ASCII.txt", "w", encoding="utf-8") as file:
+    with open(f"{path}\image_en_ASCII\{nom_image}_en_ASCII.txt", "w", encoding="utf-8") as file:
         for ligne in finale:
             file.write(f"{ligne} \n")
   
